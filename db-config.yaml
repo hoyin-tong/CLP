@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: device-db-config
+    namespace: device-api-env
+data:
+    mysql-url: device-api-db-ser
+    mysql-db-name: userapi   

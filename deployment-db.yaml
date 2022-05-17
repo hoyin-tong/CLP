@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: device-api-db-deploy
+  namespace: device-api-env
+  labels: 
+    app: device-api-db
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: device-api-db-lbl
+  template: 
+    metadata:
+      labels:
+        app: device-api-db-lbl
+    spec:
+      containers:
+      - name: device-api-db-cntnr
+        image: mysql:8.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3306
+        env:        
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: device-db-config
+              key: mysql-db-name        
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: device-db-secret
+              key: mysql-user
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: device-db-secret
+              key: mysql-password
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: device-db-secret
+              key: mysql-root-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: device-api-db-ser
+  namespace: device-api-env
+spec:
+  selector:
+    app: device-api-db-lbl
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
