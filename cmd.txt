@@ -34,3 +34,9 @@ kubectl apply -f deployment-device-api.yaml
 kubectl delete -f deployment-device-api.yaml
 
 kubectl get pods -n device-api-env
+
+kubectl logs device-api-deploy-6c748b896b-j4dxz -n device-api-env
+
+kubectl exec  -n device-api-env -it device-api-deploy-6665486786-qst62 -- bin/bash
+
+kubectl describe pod device-api-deploy -n device-api-env

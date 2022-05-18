@@ -20,14 +20,20 @@ spec:
         image: device-api:0.1
         imagePullPolicy: Never
         ports:
-        - containerPort: 3000
+        - name: apiport
+          containerPort: 3000
         livenessProbe:
           httpGet:
             path: /
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          failureThreshold: 2
+            port: apiport          
+          periodSeconds: 10
+          failureThreshold: 1
+        startupProbe:
+          httpGet:
+            path: /
+            port: apiport          
+          periodSeconds: 10
+          failureThreshold: 6
         env:
         - name: DB_URI
           valueFrom:
