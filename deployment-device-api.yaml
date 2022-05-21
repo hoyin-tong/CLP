@@ -62,11 +62,9 @@ metadata:
   name: device-api-ser
   namespace: device-api-env
 spec:
-  type: NodePort
   selector:
     app: device-api-lbl
   ports:
     - protocol: TCP
-      port: 3000
+      port: 80
       targetPort: 3000
-      nodePort: 30100

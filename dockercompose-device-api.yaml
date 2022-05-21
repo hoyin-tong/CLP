@@ -13,7 +13,7 @@ services:
   device-api:
     image: device-api:0.1
     ports:
-     - 4000:3000
+     - 3000:3000
     environment:
      - DB_URI=mysqldb
      - DB_NAME=userapi
