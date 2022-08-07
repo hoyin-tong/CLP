@@ -8,7 +8,7 @@ var port = 3000;
 var models = require("./models");
 
 // routes
-var devices = require('./routes/devices');
+var devices = require('./routes/devices.js');
 
 //Sync Database
 models.sequelize.sync().then(function () {
