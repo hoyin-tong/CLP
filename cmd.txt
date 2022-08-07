@@ -1,49 +1,113 @@
-set DB_URI=localhost
+##################################################################
+# run the program directly connecting local mysql db
+##################################################################
+set DB_URI=127.0.0.1			# or using localhost
 set DB_NAME=userapi
 set DB_USERNAME=userapi
 set DB_PASSWORD=userapi
 npm start
 
-
-set DB_URI=localhost
+##################################################################
+# run test
+##################################################################
+set DB_URI=127.0.0.1			# or using localhost
 set DB_NAME=userapi
 set DB_USERNAME=userapi
 set DB_PASSWORD=userapi
 npm test
 
+##################################################################
+# build the api to docker image
+##################################################################
+docker build -t device-api:1.0 .
 
-
-docker build -t device-api:0.1 .
-
-docker run -d --rm -p4000:3000 --name device-api  -e DB_URI=127.0.0.1 -e DB_NAME=userapi -e DB_USERNAME=userapi -e DB_PASSWORD=userapi device-api:0.1 
-
-
-docker run -d --rm -p42333:3306 --name device-mysql -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=userapi -e MYSQL_USER=userapi -e MYSQL_PASSWORD=userapi mysql:8.0
-
+##################################################################
+# run the api in container connecting docker mysql db
+##################################################################
+# create a docker network
+$ docker network create device-api-net
+# run the mysql image, using 3308 cause 3306 is using by local mysql server
+$ docker run -d --rm -p3308:3306 --name device-mysql --network device-api-net -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=userapi -e MYSQL_USER=userapi -e MYSQL_PASSWORD=userapi mysql:8.0
+# run the docker image
+$ docker run -d --rm -p4000:3000 --name device-api --network device-api-net  -e DB_URI=device-mysql -e DB_NAME=userapi -e DB_USERNAME=userapi -e DB_PASSWORD=userapi device-api:1.0
+# log in to the mysql server
 docker exec -it device-mysql mysql -uroot -p
 
+##################################################################
+# run the api in container connecting docker mysql db using docker compose
+##################################################################
 docker-compose -f dockercompose-device-api.yaml up
 
+##################################################################
+# k8s with minikube
+##################################################################
 # set minikube to get local image
-eval $(minikube docker-env)             # unix shells
-minikube docker-env | Invoke-Expression # PowerShell
+$ eval $(minikube docker-env)             # unix shells
+$ minikube docker-env | Invoke-Expression # PowerShell
 
-kubectl create namespace device-api-env
-kubectl apply -f db-secret.yaml
-kubectl apply -f db-config.yaml
-kubectl apply -f deployment-db.yaml
-kubectl apply -f deployment-device-api.yaml
+$ kubectl create namespace device-api-env
+$ kubectl apply -f db-secret.yaml
+$ kubectl apply -f db-config.yaml
+$ kubectl apply -f deployment-db.yaml
+$ kubectl apply -f deployment-device-api.yaml
 
-kubectl delete -f deployment-device-api.yaml
+$ kubectl delete -f deployment-device-api.yaml
 
-kubectl get pods -n device-api-env
+$ kubectl get pods -n device-api-env
+$ kubectl get services -n device-api-env
 
 # get ip of minikube
-minikube ip
-kubectl get node -o wide
+$ minikube ip
+$ kubectl get node -o wide
+$ minikube service list
 
-kubectl logs device-api-deploy-6c748b896b-j4dxz -n device-api-env
+$ kubectl logs device-api-deploy-6c748b896b-vg7vd -n device-api-env
 
-kubectl exec  -n device-api-env -it device-api-deploy-6665486786-qst62 -- bin/bash
+$ kubectl logs device-api-db-deploy-7ff46587dd-tq6jf -n device-api-env
 
-kubectl describe pod device-api-deploy -n device-api-env
+
+$ kubectl exec  -n device-api-env -it device-api-deploy-6c748b896b-n9krr -- bin/bash
+
+$ kubectl describe pod device-api-deploy -n device-api-env
+
+# port-forward the api service
+$ kubectl port-forward services/device-api-ser 3030:3000 -n device-api-env
+
+$ kubectl delete -f db-secret.yaml
+$ kubectl delete -f db-config.yaml
+$ kubectl delete -f deployment-db.yaml
+$ kubectl delete -f deployment-device-api.yaml
+
+
+##################################################################
+# k8s with prometheus
+##################################################################
+# install promethus (need to install helm first)
+$ helm install [CUSTOM NAME] prometheus-community/kube-prometheus-stack
+# example
+$ helm install prometheus prometheus-community/kube-prometheus-stack
+
+# Expose Garfana
+# 1. find the pod of grafana
+$ kubectl get pods
+# 2. find the grafana container inside the pods
+$ kubectl logs prometheus-grafana-648fc7cb4-tfc9k
+# 3. find the grafana port and user name
+$ kubectl logs prometheus-grafana-648fc7cb4-tfc9k -c grafana
+# 4. using port forward to expose grafana
+$ kubectl port-forward deployment/prometheus-grafana 3000
+
+# Expose Prometheus UI
+# find the service name and pod
+$ kubectl get svc
+$ kubectl port-forward service/prometheus-kube-prometheus-prometheus 9090
+
+
+# Add exporter
+# 1. find the exporter in helm
+# 2. download the values.yaml file and update the serviceMonitor session and mysql info (can down in git or use helm)
+$ helm show values prometheus-community prometheus-community/prometheus-mysql-exporter > values.yaml
+# 3. install the exporter with the value file
+$ helm install mysql-exporter prometheus-community/prometheus-mysql-exporter -f values.yaml
+# 4. check the metrics, get the services name and port forward
+$ kubectl port-forward service/mysql-exporter-prometheus-mysql-exporter 9104
