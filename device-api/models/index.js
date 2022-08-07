@@ -1,9 +1,9 @@
 var fs = require("fs");
 var path = require("path");
 var Sequelize = require("sequelize");
-//var sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
-    var sequelize = new Sequelize('userapi', 'userapi', 'userapi', {    
-    host: '127.0.0.1' ,
+var sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
+    //var sequelize = new Sequelize('userapi', 'userapi', 'userapi', {    
+    host:process.env.DB_URI, //'127.0.0.1' ,
 	port: 3306,
     dialect: 'mysql',
     operatorsAliases: false
