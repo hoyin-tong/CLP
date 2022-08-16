@@ -10,8 +10,6 @@ pipeline {
     stage("log") {      
 	    steps {
       	echo "The build number is ${env.BUILD_NUMBER}";
-				echo "The ecrLink is ${env.ecrLink}";
-				echo "The ecrcredentials is ${env.ecrcredentials}";
 	    }
     }
 		stage("build") {      
