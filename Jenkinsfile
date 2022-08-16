@@ -1,19 +1,35 @@
 pipeline {
 	environment {
-    imagename = "device-api"
     dockerImage = ""
-		ecrLink="https://${env.AWS_ACCT}.dkr.ecr.${env.AWS_REGION}.amazonaws.com"
-		ecrcredentials="ecr:${env.AWS_REGION}:my.aws.credentials"
+		registry = "kevintong103/device-api"
+    registryCredential = 'DockerHub'
   } 
 	
   agent any    
   stages {  
-    stage("build") {      
+    stage("log") {      
 	    steps {
       	echo "The build number is ${env.BUILD_NUMBER}";
 				echo "The ecrLink is ${env.ecrLink}";
 				echo "The ecrcredentials is ${env.ecrcredentials}";
 	    }
-    }	
+    }
+		stage("build") {      
+       steps {
+        script {
+					dockerImage = docker.build("${registry}:${env.BUILD_ID}")
+        }
+      } 
+    }
+		stage("push") {    
+	  	steps {
+	    	script {
+		  		docker.withRegistry('',registryCredential) {
+		    	dockerImage.push()
+		  	}		  
+			}
+		}
+		
+		
 	}
 }
